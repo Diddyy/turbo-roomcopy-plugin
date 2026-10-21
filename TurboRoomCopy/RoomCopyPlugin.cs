@@ -11,6 +11,7 @@ using Turbo.Contracts.Plugins.Admin;
 using Turbo.Contracts.Plugins.Exports;
 using Turbo.Database.Context;
 using Turbo.Database.Extensions;
+using Turbo.Events;
 using Turbo.Furniture.Custody;
 using Turbo.Primitives.Furniture.Providers;
 using Turbo.Primitives.Rooms.Providers;
@@ -25,9 +26,11 @@ namespace TurboRoomCopy;
 /// </summary>
 public sealed class RoomCopyPlugin : ITurboPlugin
 {
+    private Notices? _notices;
+
     public string Key => "roomcopy";
 
-    public string Version => "1.0.0";
+    public string Version => "1.1.0";
 
     public void ConfigureServices(IServiceCollection services, PluginManifest manifest)
     {
@@ -51,6 +54,10 @@ public sealed class RoomCopyPlugin : ITurboPlugin
             Host<IGrainFactory>(sp),
             sp.GetRequiredService<ILogger<TurboRoomCopyWriter>>()
         ));
+        services.AddSingleton(sp => new Notices(
+            sp.GetRequiredService<ILogger<Notices>>(),
+            Host<IConfiguration>(sp)["Turbo:Admin:PanelUrl"]
+        ));
         services.AddSingleton<RoomCopyService>();
         services.AddSingleton<IPluginAdmin, RoomCopyAdmin>();
     }
@@ -58,9 +65,23 @@ public sealed class RoomCopyPlugin : ITurboPlugin
     private static T Host<T>(IServiceProvider sp)
         where T : notnull => sp.GetRequiredService<IHostServices>().GetRequiredService<T>();
 
-    public Task StartAsync(IServiceProvider services, CancellationToken ct) => Task.CompletedTask;
+    public Task StartAsync(IServiceProvider services, CancellationToken ct)
+    {
+        _notices = services.GetRequiredService<Notices>();
+        _notices.Publisher = Host<EventSystem>(services).PublishAsync;
 
-    public Task StopAsync(CancellationToken ct) => Task.CompletedTask;
+        return Task.CompletedTask;
+    }
+
+    public Task StopAsync(CancellationToken ct)
+    {
+        if (_notices is not null)
+            _notices.Publisher = null;
+
+        _notices = null;
+
+        return Task.CompletedTask;
+    }
 
     public Task BindExportsAsync(IExportBinder binder, IServiceProvider services) =>
         Task.CompletedTask;

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -7,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Turbo.Contracts.Plugins.Admin;
 using Turbo.Primitives.Messages.Incoming.Userdefinedroomevents;
 using Turbo.Primitives.Navigator.Enums;
+using Turbo.Primitives.Plugins.Events;
 using Turbo.Primitives.Rooms.Enums;
 using Turbo.Primitives.Rooms.Enums.Wired;
 using Turbo.Rooms.Wired.Variables;
@@ -467,6 +469,103 @@ public class ServiceTests
 
         Assert.Equal((RoomImportEntity.FAILED, null), (row.Status, row.RoomId));
         Assert.Contains("Duplicate entry", row.Error);
+    }
+
+    // Plugin notices.
+
+    private static async Task<(TestHost Host, int ImportId)> PreviewedAsync()
+    {
+        var host = new TestHost();
+        var preview = await host.Service.PreviewAsync(
+            Json(Samples.Copy()),
+            "alice",
+            "Copied park",
+            1,
+            TestHost.CT
+        );
+
+        return (host, preview.Import!.Id);
+    }
+
+    [Fact]
+    public async Task A_finished_import_is_published_as_import_done()
+    {
+        var (host, id) = await PreviewedAsync();
+        using var _ = host;
+        var published = new List<PluginNoticeEvent>();
+
+        host.Notices.Publisher = (notice, _) =>
+        {
+            published.Add(notice);
+
+            return Task.CompletedTask;
+        };
+        host.Writer.Refuse = m =>
+            m is UpdateTriggerMessage ? "wiredfurni.error.require_keyword" : null;
+
+        await host.Service.ImportAsync(id, 2, TestHost.CT);
+
+        var notice = Assert.Single(published);
+
+        Assert.Equal("roomcopy", notice.Source);
+        Assert.Equal("import.done", notice.Topic);
+        Assert.Equal(id.ToString(), notice.Key);
+        Assert.Equal(PluginNoticeLevel.Success, notice.Level);
+        Assert.Equal($"https://admin.example/plugin/roomcopy/detail/{id}", notice.Url);
+        Assert.Equal(
+            ["Owner=alice", "Furni made=10", "Wired saved=2/3"],
+            notice.Fields.Skip(1).Select(x => $"{x.Name}={x.Value}")
+        );
+        Assert.Equal("Source room", notice.Fields[0].Name);
+    }
+
+    [Fact]
+    public async Task A_failed_import_is_published_as_import_failed()
+    {
+        var (host, id) = await PreviewedAsync();
+        using var _ = host;
+        var published = new List<PluginNoticeEvent>();
+
+        host.Notices.Publisher = (notice, _) =>
+        {
+            published.Add(notice);
+
+            return Task.CompletedTask;
+        };
+        host.Writer.FailCreate = new InvalidOperationException("Duplicate entry");
+
+        await host.Service.ImportAsync(id, 2, TestHost.CT);
+
+        var notice = Assert.Single(published);
+
+        Assert.Equal("import.failed", notice.Topic);
+        Assert.Equal(id.ToString(), notice.Key);
+        Assert.Equal(PluginNoticeLevel.Error, notice.Level);
+        Assert.Contains("Duplicate entry", notice.Text);
+    }
+
+    [Fact]
+    public async Task A_publisher_that_throws_does_not_undo_or_fail_the_import()
+    {
+        var (host, id) = await PreviewedAsync();
+        using var _ = host;
+        var calls = 0;
+
+        host.Notices.Publisher = (_, _) =>
+        {
+            calls++;
+
+            throw new InvalidOperationException("relay down");
+        };
+
+        var outcome = await host.Service.ImportAsync(id, 2, TestHost.CT);
+
+        Assert.Null(outcome.Error);
+        Assert.Equal(1, calls);
+
+        var row = host.Query(db => db.Imports.AsNoTracking().Single());
+
+        Assert.Equal((RoomImportEntity.IMPORTED, 500), (row.Status, row.RoomId));
     }
 }
 

@@ -17,13 +17,15 @@ namespace TurboRoomCopy;
 /// owner and plans it (<see cref="RoomCopyPlanner"/>) without writing a room, and keeps the copy
 /// and its dry run. <see cref="ImportAsync"/> plans that copy again against the furni as they are
 /// then, makes the room, its floor plan and furni in one write (all or nothing), and saves each
-/// wired box through the room, reporting each as saved or refused.
+/// wired box through the room, reporting each as saved or refused. How each import ended is told to
+/// other plugins (<see cref="Notices"/>).
 /// </summary>
 public sealed class RoomCopyService(
     IServiceScopeFactory scopes,
     IRoomCopyWriter writer,
     RoomCopyPlanner planner,
     TimeProvider time,
+    Notices notices,
     ILogger<RoomCopyService> logger
 )
 {
@@ -130,6 +132,7 @@ public sealed class RoomCopyService(
             import.Status = RoomImportEntity.FAILED;
             import.Error = Cut(ex.GetBaseException().Message, 1000);
             await db.SaveChangesAsync(CancellationToken.None).ConfigureAwait(false);
+            await notices.FailedAsync(import, CancellationToken.None).ConfigureAwait(false);
 
             return new(
                 import,
@@ -171,6 +174,16 @@ public sealed class RoomCopyService(
             wired.Count(x => x.Saved),
             wired.Count
         );
+
+        await notices
+            .DoneAsync(
+                import,
+                created.ItemIds.Count,
+                wired.Count(x => x.Saved),
+                wired.Count,
+                CancellationToken.None
+            )
+            .ConfigureAwait(false);
 
         return new(import, null);
     }

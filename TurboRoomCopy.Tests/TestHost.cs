@@ -181,6 +181,7 @@ internal sealed class TestHost : IDisposable
             Writer,
             Planner,
             TimeProvider.System,
+            Notices,
             NullLogger<RoomCopyService>.Instance
         );
         Admin = new RoomCopyAdmin(Services.GetRequiredService<IServiceScopeFactory>(), Service);
@@ -189,6 +190,9 @@ internal sealed class TestHost : IDisposable
     public ServiceProvider Services { get; }
 
     public FakeWriter Writer { get; } = new();
+
+    /// <summary>The notices, with no publisher until a test sets one.</summary>
+    public Notices Notices { get; } = new(NullLogger<Notices>.Instance, "https://admin.example/");
 
     public RoomCopyPlanner Planner { get; }
 

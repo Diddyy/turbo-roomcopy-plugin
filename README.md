@@ -16,6 +16,10 @@ it as a new room with its floor plan, settings, furni and wired.
 Previews and imports are kept in `roomcopy_imports`, with the copy itself, so an import runs on
 what was previewed. The report of each can be downloaded as JSON from its page.
 
+How each import ended is told to other plugins as a plugin notice: with the
+[Turbo Discord plugin](https://github.com/Diddyy/turbo-discord-plugin) loaded it is posted to
+Discord like any other hotel event (Notices, below).
+
 ## How a room is made
 
 The importer writes rooms the way the server does:
@@ -113,6 +117,24 @@ The panel sends a plugin at most `Turbo:Admin:PluginMaxBodyBytes` (1 MB) and wai
 `Turbo:Admin:PluginTimeoutSeconds` (30 s): a copy of a few hundred furni is about 50 KB and imports
 in under a second.
 
+## Notices (Discord)
+
+From version 1.1.0 the plugin publishes a `PluginNoticeEvent` (turbo-cloud's
+`docs/plugin-notices.md`, turbo-cloud #296 or later) on the hotel's event system when an import
+ends, keyed by the import id:
+
+| Topic | When | Level |
+| --- | --- | --- |
+| `import.done` | The room is made (whatever became of its wired boxes). | Success |
+| `import.failed` | The import failed and made nothing; the text says why. | Error |
+
+Each carries the fields Source room (the copy's hotel and room id), Owner, Furni made and Wired
+saved (saved/boxes), and a link to the import's page (`/plugin/roomcopy/detail/<id>`) when the
+server has `Turbo:Admin:PanelUrl`. The Discord plugin lists `plugin:roomcopy:import.done` and
+`plugin:roomcopy:import.failed` in its routing table, off until the hotel turns them on and gives
+them a webhook. With no relay loaded a notice goes nowhere, and a notice that cannot be published
+is logged: the import stands either way.
+
 ## Permission
 
 `plugin.roomcopy.import`: the Room import page, previewing, importing and discarding. No one holds
@@ -123,7 +145,8 @@ it until a hotel grants it. Every call but a GET is in the command log as
 
 The plugin builds against a built turbo-cloud checkout (its `Turbo.*` assemblies are the host's and
 are never copied into the plugin's folder). Besides the plugin contracts it uses the server's furni
-custody (`Turbo.Furniture`) and wired variable ids (`Turbo.Rooms`):
+custody (`Turbo.Furniture`), wired variable ids (`Turbo.Rooms`) and the event system its notices are
+published on (`Turbo.Events`, with `PluginNoticeEvent`: turbo-cloud #296 or later):
 
 ```sh
 TURBO_CLOUD=/path/to/turbo-cloud ./scripts/package.sh
@@ -136,8 +159,9 @@ load the plugin creates its table (`roomcopy_imports`) through the server's own 
 
 ### Releases
 
-A tag `v1.2.3` (pushed, or named in a manual run of Release, which makes it on that commit) runs `.github/workflows/release.yml`: it builds and tests the plugin against
-turbo-cloud at the ref pinned there (`TURBO_CLOUD_REF`), stamps the manifest's `Version` and
+A tag `v1.2.3` (pushed, or named in a manual run of Release, which makes it on that commit) runs
+`.github/workflows/release.yml`: it builds and tests the plugin against turbo-cloud at the ref
+pinned there (`TURBO_CLOUD_REF`), stamps the manifest's `Version` and
 `BuiltAgainst`, and attaches `roomcopy-v1.2.3.zip` to the tag's release, which a server linked to
 this repository in the admin panel installs. `ApiVersion` in the manifest is the turbo-cloud plugin
 API it is built for; move `TURBO_CLOUD_REF` and it together.
@@ -146,7 +170,10 @@ API it is built for; move `TURBO_CLOUD_REF` and it together.
 
 ```sh
 dotnet test TurboRoomCopy.Tests -p:TurboCloudPath=/path/to/turbo-cloud
+dotnet tool restore && dotnet csharpier check .
 ```
+
+`.github/workflows/ci.yml` runs both on every push and pull request against turbo-cloud's `main`.
 
 ## Migrations
 
