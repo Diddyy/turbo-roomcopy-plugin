@@ -529,6 +529,11 @@ public class AdminTests
         Assert.Equal(["plugin.roomcopy.import"], admin.Nodes);
         Assert.All(admin.Endpoints, x => Assert.Equal("plugin.roomcopy.import", x.Node));
         Assert.Equal(["import", "detail"], admin.Pages.Select(x => x.Id));
+        // Preview goes straight to the preview's own page, where Import is.
+        Assert.Equal(
+            "open:detail",
+            admin.Pages[0].Blocks.Single(x => x.Type == "form").Submit!.Then
+        );
 
         Task<PluginAdminResult> Call(string method, string pattern, PluginAdminRequest request) =>
             admin
@@ -543,7 +548,9 @@ public class AdminTests
                 "imports",
                 body: new
                 {
-                    document = Samples.Copy().ToJsonString(),
+                    // The file field (the panel sends its text); the pasted one stays empty.
+                    file = Samples.Copy().ToJsonString(),
+                    document = "",
                     owner = "alice",
                     name = "",
                 }
@@ -551,6 +558,10 @@ public class AdminTests
         );
 
         Assert.Equal(200, previewed.Status);
+        Assert.Equal(
+            host.Query(db => db.Imports.Single().Id),
+            JsonSerializer.SerializeToElement(previewed.Value).GetProperty("id").GetInt32()
+        );
 
         var id = host.Query(db => db.Imports.Single().Id).ToString();
         var list = JsonSerializer.SerializeToElement(
@@ -581,6 +592,7 @@ public class AdminTests
         Assert.Equal(200, run.Status);
         Assert.Equal("imported", detail.GetProperty("status").GetString());
         Assert.Equal(500, detail.GetProperty("roomId").GetInt32());
+        Assert.Equal("/rooms/500", detail.GetProperty("link").GetString());
         Assert.Contains("variable 30", detail.GetProperty("wiredSaved").GetString());
         Assert.Contains("404 is not in the room", detail.GetProperty("wiredRefused").GetString());
 

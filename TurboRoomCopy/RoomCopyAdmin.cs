@@ -67,11 +67,17 @@ public sealed class RoomCopyAdmin(IServiceScopeFactory scopes, RoomCopyService s
                         Fields:
                         [
                             new PluginAdminField(
+                                "file",
+                                "Room copy file",
+                                "file",
+                                Options: [".json"],
+                                Hint: "The room copy v1 .json file (see the plugin's README)."
+                            ),
+                            new PluginAdminField(
                                 "document",
-                                "Room copy",
+                                "Or paste it",
                                 "textarea",
-                                Required: true,
-                                Hint: "The room copy v1 JSON (see the plugin's README)."
+                                Hint: "The same JSON pasted, when no file is chosen. A panel too old for file fields shows only this."
                             ),
                             new PluginAdminField(
                                 "owner",
@@ -85,7 +91,13 @@ public sealed class RoomCopyAdmin(IServiceScopeFactory scopes, RoomCopyService s
                                 Hint: "Empty: the copied room's own name."
                             ),
                         ],
-                        Submit: new PluginAdminAction("Preview", "POST", "imports")
+                        // Straight to the preview, where Import is (panels without open: stay here).
+                        Submit: new PluginAdminAction(
+                            "Preview",
+                            "POST",
+                            "imports",
+                            Then: "open:detail"
+                        )
                     ),
                     new PluginAdminBlock(
                         "table",
@@ -172,7 +184,7 @@ public sealed class RoomCopyAdmin(IServiceScopeFactory scopes, RoomCopyService s
                             new PluginAdminColumn("wiredRefused", "Wired refused"),
                             new PluginAdminColumn("warnings", "Warnings"),
                             new PluginAdminColumn("roomId", "Room id", "number"),
-                            new PluginAdminColumn("link", "Room"),
+                            new PluginAdminColumn("link", "Room", "link"),
                             new PluginAdminColumn("error", "Error"),
                             new PluginAdminColumn("created", "Previewed", "time"),
                             new PluginAdminColumn("importedAt", "Imported", "time"),
@@ -256,7 +268,7 @@ public sealed class RoomCopyAdmin(IServiceScopeFactory scopes, RoomCopyService s
 
         var outcome = await service
             .PreviewAsync(
-                Text(body, "document"),
+                Text(body, "file") is { Length: > 0 } file ? file : Text(body, "document"),
                 Text(body, "owner"),
                 Text(body, "name"),
                 request.PlayerId,
@@ -456,9 +468,7 @@ public sealed class RoomCopyAdmin(IServiceScopeFactory scopes, RoomCopyService s
             ),
             warnings = Lines(preview, "warnings"),
             roomId = x.RoomId,
-            link = x.RoomId is { } roomId
-                ? $"/rooms/{roomId} (admin), :goto {roomId} in the hotel"
-                : null,
+            link = x.RoomId is { } roomId ? $"/rooms/{roomId}" : null,
             error = x.Error,
             created = x.CreatedAt,
             importedAt = x.ImportedAt,
