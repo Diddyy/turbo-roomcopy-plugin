@@ -158,7 +158,16 @@ public sealed class RoomCopyAdmin(IServiceScopeFactory scopes, RoomCopyService s
                             new PluginAdminColumn("furniLeftOut", "Furni left out", "number"),
                             new PluginAdminColumn("unmapped", "Not in this hotel"),
                             new PluginAdminColumn("stuff", "Stuff data"),
-                            new PluginAdminColumn("wiredBoxes", "Wired boxes", "number"),
+                            new PluginAdminColumn(
+                                "wiredBoxes",
+                                "Wired configs in the copy",
+                                "number"
+                            ),
+                            new PluginAdminColumn(
+                                "wiredWithoutConfig",
+                                "Wired boxes without config",
+                                "number"
+                            ),
                             new PluginAdminColumn("wiredSaved", "Wired saved"),
                             new PluginAdminColumn("wiredRefused", "Wired refused"),
                             new PluginAdminColumn("warnings", "Warnings"),
@@ -376,7 +385,10 @@ public sealed class RoomCopyAdmin(IServiceScopeFactory scopes, RoomCopyService s
             return $"{boxes.Count(b => b.GetProperty("saved").GetBoolean())}/{boxes.Count} saved";
         }
 
-        return $"{Number(preview, "wiredToSave")} to save";
+        var unconfigured = Number(preview, "wiredWithoutConfig");
+
+        return $"{Number(preview, "wiredToSave")} to save"
+            + (unconfigured > 0 ? $", {unconfigured} without config" : "");
     }
 
     internal static object Detail(RoomImportEntity x)
@@ -410,6 +422,7 @@ public sealed class RoomCopyAdmin(IServiceScopeFactory scopes, RoomCopyService s
                 ? string.Join(", ", stuff.EnumerateObject().Select(s => $"{s.Name} {s.Value}"))
                 : "",
             wiredBoxes = Number(preview, "wiredBoxes"),
+            wiredWithoutConfig = Number(preview, "wiredWithoutConfig"),
             wiredSaved = report is null
                 ? $"{Number(preview, "wiredToSave")} to save"
                 : string.Join(

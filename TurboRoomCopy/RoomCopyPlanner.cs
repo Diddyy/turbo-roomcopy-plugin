@@ -48,6 +48,14 @@ public sealed class RoomCopyPlanner(IFurnitureDefinitionProvider definitions, Ro
         KIND_ACTION,
     ];
 
+    /// <summary>The logics of wired boxes, as against wired furni that are not boxes (tiles, counters, timers).</summary>
+    private static readonly System.Text.RegularExpressions.Regex WIRED_BOX = new(
+        "^wf_(trg|act|cnd|slc|xtra|var)_",
+        System.Text.RegularExpressions.RegexOptions.CultureInvariant
+    );
+
+    internal static bool IsWiredBox(string? logic) => logic is not null && WIRED_BOX.IsMatch(logic);
+
     private const string HEIGHT_CHARACTERS = "0123456789abcdefghijklmnopqrstuvwxyz";
     private const char CLOSED_TILE = 'x';
 
@@ -98,7 +106,8 @@ public sealed class RoomCopyPlanner(IFurnitureDefinitionProvider definitions, Ro
                     definition.Name,
                     false,
                     new RoomPosition(item.X, item.Y, item.Z, ReadRotation(item.Dir), null),
-                    ExtraData(item.Stuff, item.Ref!, definition, warnings)
+                    ExtraData(item.Stuff, item.Ref!, definition, warnings),
+                    IsWiredBox(definition.LogicName)
                 )
             );
         }
@@ -145,6 +154,16 @@ public sealed class RoomCopyPlanner(IFurnitureDefinitionProvider definitions, Ro
         }
 
         var wired = PlanWired(copy.Wired, furni, warnings);
+        var configured = wired.Select(x => x.Ref).ToHashSet(StringComparer.Ordinal);
+        List<string> unconfigured =
+        [
+            .. furni.Where(x => x.WiredBox && !configured.Contains(x.Ref)).Select(x => x.Ref),
+        ];
+
+        if (unconfigured.Count > 0)
+            warnings.Add(
+                $"{unconfigured.Count} wired boxes without config: placed as new boxes, with nothing set."
+            );
 
         if (furni.Count == 0 && copy.FloorItems.Count + copy.WallItems.Count > 0)
             warnings.Add("None of the copy's furni is known to this hotel.");
@@ -155,6 +174,7 @@ public sealed class RoomCopyPlanner(IFurnitureDefinitionProvider definitions, Ro
             Room = room,
             Furni = furni,
             Wired = wired,
+            UnconfiguredWired = unconfigured,
             Unmapped =
             [
                 .. unmapped

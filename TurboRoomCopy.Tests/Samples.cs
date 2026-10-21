@@ -12,6 +12,9 @@ internal static class Samples
     public const string ACTION_BOX = "31";
     public const string TRIGGER_BOX = "32";
 
+    /// <summary>A box the copy has no config for, as every box of a room Habbo won't let us read.</summary>
+    public const string UNCONFIGURED_BOX = "33";
+
     /// <summary>The id Habbo gives the variable a box makes, as its copy names it.</summary>
     public static string VariableOf(string boxRef) =>
         WiredVariableIdBuilder
@@ -31,9 +34,9 @@ internal static class Samples
             .Add(6, "table_norja", 777)
             .Add(7, "chair_norja", 778)
             .Add(8, "poster", 4001, ProductType.Wall)
-            .Add(9, "wf_var_furni", 5000)
-            .Add(10, "wf_act_match_to_sshot", 3700)
-            .Add(11, "wf_trg_says_something", 3675);
+            .Add(9, "wf_var_furni", 5000, logic: "wf_var_furni")
+            .Add(10, "wf_act_match_to_sshot", 3700, logic: "wf_act_match_to_sshot")
+            .Add(11, "wf_trg_says_something", 3675, logic: "wf_trg_says_something");
 
     public static JsonObject Copy() =>
         JsonNode
@@ -62,7 +65,8 @@ internal static class Samples
                     { "ref": "16", "sprite": 777, "classname": "chair_norja", "x": 2, "y": 2, "z": 1.25, "dir": 4 },
                     { "ref": "{{VARIABLE_BOX}}", "sprite": 5000, "classname": "wf_var_furni", "x": 3, "y": 2, "z": 0, "dir": 0 },
                     { "ref": "{{ACTION_BOX}}", "sprite": 3700, "classname": "wf_act_match_to_sshot", "x": 3, "y": 2, "z": 0.65, "dir": 0 },
-                    { "ref": "{{TRIGGER_BOX}}", "sprite": 3675, "classname": "wf_trg_says_something", "x": 3, "y": 2, "z": 1.3, "dir": 0 }
+                    { "ref": "{{TRIGGER_BOX}}", "sprite": 3675, "classname": "wf_trg_says_something", "x": 3, "y": 2, "z": 1.3, "dir": 0 },
+                    { "ref": "{{UNCONFIGURED_BOX}}", "sprite": 3675, "classname": "wf_trg_says_something", "x": 1, "y": 1, "z": 0, "dir": 0, "stuff": { "type": "legacy", "value": "0" } }
                   ],
                   "wallItems": [
                     { "ref": "20", "sprite": 4001, "classname": "poster", "wallPosition": ":w=3,2 l=10,40 r", "stuff": { "type": "legacy", "value": "12" } }

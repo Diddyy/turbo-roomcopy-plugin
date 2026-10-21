@@ -277,6 +277,7 @@ public sealed class RoomCopyService(
                 .ToDictionary(x => x.Key, x => x.Count()),
             wiredBoxes = copy.Wired.Count,
             wiredToSave = plan.Wired.Count,
+            wiredWithoutConfig = plan.UnconfiguredWired.Count,
             warnings = plan.Warnings,
         };
 

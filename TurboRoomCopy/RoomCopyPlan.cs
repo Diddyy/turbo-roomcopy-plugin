@@ -22,6 +22,12 @@ public sealed record RoomCopyPlan
 
     public required List<PlannedWired> Wired { get; init; }
 
+    /// <summary>
+    /// The refs of wired boxes the copy has no config for (Habbo lets few read a room's wired):
+    /// placed as a box is when it is first put down, with nothing set.
+    /// </summary>
+    public required List<string> UnconfiguredWired { get; init; }
+
     public required List<UnmappedFurni> Unmapped { get; init; }
 
     public required List<string> Warnings { get; init; }
@@ -86,14 +92,19 @@ public sealed record PlannedRoom
     public string? Tags { get; init; }
 }
 
-/// <summary>One furni to make: the source's ref, the definition it maps to, where it stands and its extra data.</summary>
+/// <summary>
+/// One furni to make: the source's ref, the definition it maps to, where it stands and its extra
+/// data; <see cref="WiredBox"/> when its definition is a wired box (a trigger, action, condition,
+/// selector, add-on or variable).
+/// </summary>
 public sealed record PlannedFurni(
     string Ref,
     int DefinitionId,
     string DefinitionName,
     bool OnWall,
     RoomPosition Position,
-    string? ExtraDataJson
+    string? ExtraDataJson,
+    bool WiredBox = false
 );
 
 /// <summary>One wired box to save once its furni exist; its refs are turned into the new ids then.</summary>

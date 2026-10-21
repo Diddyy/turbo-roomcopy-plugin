@@ -22,7 +22,13 @@ internal sealed class Definitions : IFurnitureDefinitionProvider
 {
     private readonly List<FurnitureDefinitionSnapshot> _all = [];
 
-    public Definitions Add(int id, string name, int sprite, ProductType type = ProductType.Floor)
+    public Definitions Add(
+        int id,
+        string name,
+        int sprite,
+        ProductType type = ProductType.Floor,
+        string logic = "default_floor"
+    )
     {
         _all.Add(
             new FurnitureDefinitionSnapshot
@@ -32,7 +38,7 @@ internal sealed class Definitions : IFurnitureDefinitionProvider
                 Name = name,
                 ProductType = type,
                 FurniCategory = default,
-                LogicName = "default_floor",
+                LogicName = logic,
                 TotalStates = 2,
                 Width = 1,
                 Length = 1,

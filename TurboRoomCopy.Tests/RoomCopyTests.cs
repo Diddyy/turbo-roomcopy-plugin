@@ -31,7 +31,7 @@ public class PlannerTests
         var byRef = plan.Furni.ToDictionary(x => x.Ref);
 
         Assert.True(plan.CanImport);
-        Assert.Equal(9, plan.Furni.Count);
+        Assert.Equal(10, plan.Furni.Count);
         Assert.Equal("room_info15_div", byRef["10"].DefinitionName);
         // Sprite 777 is another furni here: the class name wins, and says so.
         Assert.Equal("chair_norja", byRef["16"].DefinitionName);
@@ -202,6 +202,23 @@ public class PlannerTests
     }
 
     [Fact]
+    public void A_wired_box_without_config_is_placed_as_a_new_box_and_counted()
+    {
+        var plan = Plan(Samples.Copy());
+        var box = plan.Furni.Single(x => x.Ref == Samples.UNCONFIGURED_BOX);
+
+        Assert.True(box.WiredBox);
+        Assert.Equal([Samples.UNCONFIGURED_BOX], plan.UnconfiguredWired);
+        Assert.DoesNotContain(plan.Wired, x => x.Ref == Samples.UNCONFIGURED_BOX);
+        // Its legacy state only: no wired section, so the room loads it with nothing set.
+        Assert.DoesNotContain("wired", box.ExtraDataJson);
+        Assert.Contains(plan.Warnings, x => x.StartsWith("1 wired boxes without config"));
+        // Wired furni that are not boxes are not counted.
+        Assert.False(RoomCopyPlanner.IsWiredBox("wf_floor_switch1"));
+        Assert.True(RoomCopyPlanner.IsWiredBox("wf_xtra_random"));
+    }
+
+    [Fact]
     public void Wired_is_saved_variables_first_and_only_for_boxes_in_the_room()
     {
         var copy = Samples.Copy();
@@ -348,7 +365,8 @@ public class ServiceTests
 
         using var preview = JsonDocument.Parse(row.Preview);
 
-        Assert.Equal(9, preview.RootElement.GetProperty("furniMade").GetInt32());
+        Assert.Equal(10, preview.RootElement.GetProperty("furniMade").GetInt32());
+        Assert.Equal(1, preview.RootElement.GetProperty("wiredWithoutConfig").GetInt32());
         Assert.Equal(2, preview.RootElement.GetProperty("furniLeftOut").GetInt32());
         Assert.Equal(
             "mystery_furni (sprite 99999) x2",
@@ -414,7 +432,7 @@ public class ServiceTests
         using var report = JsonDocument.Parse(row.Report!);
         var wired = report.RootElement.GetProperty("wired").EnumerateArray().ToList();
 
-        Assert.Equal(9, report.RootElement.GetProperty("furniMade").GetInt32());
+        Assert.Equal(10, report.RootElement.GetProperty("furniMade").GetInt32());
         Assert.Equal([true, false, true], wired.Select(x => x.GetProperty("saved").GetBoolean()));
         Assert.Equal("wiredfurni.error.require_keyword", wired[1].GetProperty("error").GetString());
 
@@ -541,10 +559,13 @@ public class AdminTests
 
         Assert.Equal(1, list.GetProperty("total").GetInt32());
         Assert.Equal(
-            "9 furni",
+            "10 furni",
             $"{list.GetProperty("items")[0].GetProperty("furni").GetInt32()} furni"
         );
-        Assert.Equal("3 to save", list.GetProperty("items")[0].GetProperty("wired").GetString());
+        Assert.Equal(
+            "3 to save, 1 without config",
+            list.GetProperty("items")[0].GetProperty("wired").GetString()
+        );
 
         var refused = await Call(
             "POST",
