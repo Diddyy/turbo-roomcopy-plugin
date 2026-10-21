@@ -1,0 +1,10 @@
+{
+    "Name": "Turbo Room Copy",
+    "Key": "roomcopy",
+    "Version": "1.0.0",
+    "Author": "Diddyy",
+    "AssemblyFile": "TurboRoomCopy.dll",
+    "Dependencies": [],
+    "TablePrefix": "roomcopy_",
+    "ApiVersion": 1
+}

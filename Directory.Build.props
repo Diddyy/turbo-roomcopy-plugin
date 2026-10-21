@@ -1,0 +1,22 @@
+<Project>
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <!--
+      The turbo-cloud checkout the plugin builds against: its Turbo.* assemblies are the host's,
+      so they are referenced and never copied into the plugin's folder. Override with
+      -p:TurboCloudPath=... or the TurboCloudPath environment variable.
+    -->
+    <TurboCloudPath Condition="'$(TurboCloudPath)' == ''">$(MSBuildThisFileDirectory)..\turbo-cloud</TurboCloudPath>
+    <TurboCloudConfiguration Condition="'$(TurboCloudConfiguration)' == ''">Debug</TurboCloudConfiguration>
+  </PropertyGroup>
+  <!--
+    The host assemblies the plugin builds on. Besides the contracts, the importer uses the server's
+    own furni custody (Turbo.Furniture) and wired variable ids (Turbo.Rooms), so a room it makes is
+    written the way the server writes one.
+  -->
+  <ItemGroup>
+    <TurboAssembly Include="Turbo.Contracts;Turbo.Primitives;Turbo.Database;Turbo.Pipeline;Turbo.Messages;Turbo.Furniture;Turbo.Rooms" />
+  </ItemGroup>
+</Project>

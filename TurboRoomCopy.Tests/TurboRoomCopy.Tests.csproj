@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Orleans.Core.Abstractions" />
+    <PackageReference Include="Microsoft.Orleans.Serialization.Abstractions" />
+    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TurboRoomCopy\TurboRoomCopy.csproj" />
+  </ItemGroup>
+  <!-- Here the host's assemblies are copied: the tests run without a host. -->
+  <ItemGroup>
+    <Reference
+      Include="@(TurboAssembly)"
+      HintPath="$(TurboCloudPath)\%(Identity)\bin\$(TurboCloudConfiguration)\net10.0\%(Identity).dll"
+    />
+  </ItemGroup>
+</Project>
