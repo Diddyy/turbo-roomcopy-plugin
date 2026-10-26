@@ -11,8 +11,8 @@ using Turbo.Contracts.Plugins.Admin;
 using Turbo.Contracts.Plugins.Exports;
 using Turbo.Database.Context;
 using Turbo.Database.Extensions;
-using Turbo.Events;
 using Turbo.Furniture.Custody;
+using Turbo.Primitives.Events;
 using Turbo.Primitives.Furniture.Providers;
 using Turbo.Primitives.Rooms.Providers;
 using TurboRoomCopy.Database;
@@ -68,7 +68,7 @@ public sealed class RoomCopyPlugin : ITurboPlugin
     public Task StartAsync(IServiceProvider services, CancellationToken ct)
     {
         _notices = services.GetRequiredService<Notices>();
-        _notices.Publisher = Host<EventSystem>(services).PublishAsync;
+        _notices.Publisher = Host<IEventPublisher>(services).PublishAsync;
 
         return Task.CompletedTask;
     }

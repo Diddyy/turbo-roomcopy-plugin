@@ -18,10 +18,9 @@
   <!--
     The host assemblies the plugin builds on. Besides the contracts, the importer uses the server's
     own furni custody (Turbo.Furniture) and wired variable ids (Turbo.Rooms), so a room it makes is
-    written the way the server writes one. Turbo.Events: the hotel's event system, which its notices
-    are published on.
+    written the way the server writes one.
   -->
   <ItemGroup>
-    <TurboAssembly Include="Turbo.Contracts;Turbo.Primitives;Turbo.Database;Turbo.Pipeline;Turbo.Messages;Turbo.Furniture;Turbo.Rooms;Turbo.Events" />
+    <TurboAssembly Include="Turbo.Contracts;Turbo.Primitives;Turbo.Database;Turbo.Furniture;Turbo.Rooms" />
   </ItemGroup>
 </Project>

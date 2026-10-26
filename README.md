@@ -145,8 +145,8 @@ it until a hotel grants it. Every call but a GET is in the command log as
 
 The plugin builds against a built turbo-cloud checkout (its `Turbo.*` assemblies are the host's and
 are never copied into the plugin's folder). Besides the plugin contracts it uses the server's furni
-custody (`Turbo.Furniture`), wired variable ids (`Turbo.Rooms`) and the event system its notices are
-published on (`Turbo.Events`, with `PluginNoticeEvent`: turbo-cloud #296 or later):
+custody (`Turbo.Furniture`) and wired variable ids (`Turbo.Rooms`); its notices are published
+through `IEventPublisher` (`Turbo.Primitives`):
 
 ```sh
 TURBO_CLOUD=/path/to/turbo-cloud ./scripts/package.sh

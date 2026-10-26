@@ -23,7 +23,7 @@ public sealed class Notices(ILogger<Notices> logger, string? panelUrl = null)
     public const string IMPORT_DONE = "import.done";
     public const string IMPORT_FAILED = "import.failed";
 
-    /// <summary>The host's <c>EventSystem.PublishAsync</c> while the plugin runs; null: nothing is published.</summary>
+    /// <summary>The host's <c>IEventPublisher.PublishAsync</c> while the plugin runs; null: nothing is published.</summary>
     public Func<PluginNoticeEvent, CancellationToken, Task>? Publisher { get; set; }
 
     /// <summary>An import that made its room, with how many furni it made and wired boxes it saved.</summary>
