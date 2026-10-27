@@ -5,7 +5,6 @@ using System.Linq;
 using Turbo.Primitives.Messages.Incoming.Userdefinedroomevents;
 using Turbo.Primitives.Rooms.Enums.Wired;
 using Turbo.Primitives.Rooms.Wired.Variable;
-using Turbo.Rooms.Wired.Variables;
 
 namespace TurboRoomCopy;
 
@@ -13,7 +12,7 @@ namespace TurboRoomCopy;
 /// A copied wired box as the editor's save would send it for the new room: the furni it picks
 /// and the variables it names turned from the copy's refs into the new ids.
 ///
-/// A variable a box makes is named after its box (<see cref="WiredVariableIdBuilder.CreateFromBoxId(int)"/>,
+/// A variable a box makes is named after its box (<see cref="WiredVariableId.OfBox(int)"/>,
 /// the same hash Habbo uses), so a variable of a box in the copy is found by hashing the copy's
 /// refs and is renamed after the new box. An internal variable (a furni's or a user's own) is the
 /// same in every hotel and is kept. Any other is reported and passed on as it was: the save
@@ -46,14 +45,10 @@ internal static class WiredCopy
             )
                 continue;
 
-            map[WiredVariableIdBuilder.CreateFromBoxId(oldId).Value] = WiredVariableIdBuilder
-                .CreateFromBoxId(newId)
-                .Value;
+            map[WiredVariableId.OfBox(oldId).Value] = WiredVariableId.OfBox(newId).Value;
 
             for (var i = 0; i < SUB_VARIABLES; i++)
-                map[WiredVariableIdBuilder.CreateFromBoxId(oldId, i).Value] = WiredVariableIdBuilder
-                    .CreateFromBoxId(newId, i)
-                    .Value;
+                map[WiredVariableId.OfBox(oldId, i).Value] = WiredVariableId.OfBox(newId, i).Value;
         }
 
         return map;

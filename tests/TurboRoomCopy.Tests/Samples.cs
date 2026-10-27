@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text.Json.Nodes;
 using Turbo.Primitives.Furniture.Enums;
-using Turbo.Rooms.Wired.Variables;
+using Turbo.Primitives.Rooms.Wired.Variable;
 
 namespace TurboRoomCopy.Tests;
 
@@ -17,8 +17,8 @@ internal static class Samples
 
     /// <summary>The id Habbo gives the variable a box makes, as its copy names it.</summary>
     public static string VariableOf(string boxRef) =>
-        WiredVariableIdBuilder
-            .CreateFromBoxId(int.Parse(boxRef, CultureInfo.InvariantCulture))
+        WiredVariableId
+            .OfBox(int.Parse(boxRef, CultureInfo.InvariantCulture))
             .Value.ToString(CultureInfo.InvariantCulture);
 
     /// <summary>A database (box) variable of no box in the copy.</summary>

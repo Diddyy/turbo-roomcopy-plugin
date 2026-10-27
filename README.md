@@ -143,33 +143,33 @@ it until a hotel grants it. Every call but a GET is in the command log as
 
 ## Build and install
 
-The plugin builds against a built turbo-cloud checkout (its `Turbo.*` assemblies are the host's and
-are never copied into the plugin's folder). Besides the plugin contracts it uses the server's furni
-custody (`Turbo.Furniture`), wired variable ids (`Turbo.Rooms`) and the event system its notices are
-published on (`Turbo.Events`, with `PluginNoticeEvent`: turbo-cloud #296 or later):
+The plugin is its C# sources (`server/`, the manifest's default `Sources`): a Turbo server compiles
+them as it loads the plugin, against its plugin surface (turbo-cloud `docs/plugin-loading.md`).
+It builds on the contracts alone: rooms' furni through `IRoomFurniWriter`, a box variable's id
+through `WiredVariableId.OfBox`, its notices through `IEventPublisher`. `server/TurboRoomCopy.csproj`
+imports the server's `plugin-sdk/Turbo.Plugin.props`, so building it is the server's own check:
 
 ```sh
-TURBO_CLOUD=/path/to/turbo-cloud ./scripts/package.sh
+TurboCloudPath=/path/to/turbo-cloud ./scripts/package.sh
 ```
 
-That leaves `dist/roomcopy/` with `TurboRoomCopy.dll` and `manifest.json`. Copy that folder into
-the server's plugin folder (`Turbo:Plugin:PluginFolderPath`, by default `plugins/` beside
-`Turbo.Main`), as `plugins/roomcopy/`, and restart the server (or let hot reload pick it up). On
-load the plugin creates its table (`roomcopy_imports`) through the server's own migrator.
+That checks the sources compile and leaves `dist/roomcopy/` with `manifest.json` and the sources.
+Copy that folder into the server's plugin folder (`Turbo:Plugin:PluginFolderPath`, by default
+`plugins/` beside `Turbo.Main`), as `plugins/roomcopy/`, and restart the server (or let hot reload
+pick it up). On load the plugin creates its table (`roomcopy_imports`) through the server's own
+migrator.
 
 ### Releases
 
-A tag `v1.2.3` (pushed, or named in a manual run of Release, which makes it on that commit) runs
-`.github/workflows/release.yml`: it builds and tests the plugin against turbo-cloud at the ref
-pinned there (`TURBO_CLOUD_REF`), stamps the manifest's `Version` and
-`BuiltAgainst`, and attaches `roomcopy-v1.2.3.zip` to the tag's release, which a server linked to
-this repository in the admin panel installs. `ApiVersion` in the manifest is the turbo-cloud plugin
-API it is built for; move `TURBO_CLOUD_REF` and it together.
+A tag `v1.2.3` that matches the manifest's `Version` (pushed, or named in a manual run of Release,
+which makes it on that commit) runs `.github/workflows/release.yml`: it checks and tests the plugin
+against turbo-cloud's `main` and makes the tag's release. A server linked to this repository in the
+admin panel installs the tag's sources; there is no built asset.
 
 ## Tests
 
 ```sh
-dotnet test TurboRoomCopy.Tests -p:TurboCloudPath=/path/to/turbo-cloud
+dotnet test tests/TurboRoomCopy.Tests -p:TurboCloudPath=/path/to/turbo-cloud
 dotnet tool restore && dotnet csharpier check .
 ```
 
@@ -179,5 +179,5 @@ dotnet tool restore && dotnet csharpier check .
 
 ```sh
 TurboCloudPath=/path/to/turbo-cloud DesignTime=true dotnet ef migrations add <Name> \
-  --project TurboRoomCopy/TurboRoomCopy.csproj --context RoomCopyDbContext --output-dir Database/Migrations
+  --project server/TurboRoomCopy.csproj --context RoomCopyDbContext --output-dir Database/Migrations
 ```

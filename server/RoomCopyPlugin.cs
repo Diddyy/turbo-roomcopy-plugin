@@ -11,8 +11,8 @@ using Turbo.Contracts.Plugins.Admin;
 using Turbo.Contracts.Plugins.Exports;
 using Turbo.Database.Context;
 using Turbo.Database.Extensions;
-using Turbo.Events;
-using Turbo.Furniture.Custody;
+using Turbo.Database.Furniture;
+using Turbo.Primitives.Events;
 using Turbo.Primitives.Furniture.Providers;
 using Turbo.Primitives.Rooms.Providers;
 using TurboRoomCopy.Database;
@@ -49,7 +49,7 @@ public sealed class RoomCopyPlugin : ITurboPlugin
         ));
         services.AddSingleton<IRoomCopyWriter>(sp => new TurboRoomCopyWriter(
             Host<IDbContextFactory<TurboDbContext>>(sp),
-            Host<IFurnitureCustody>(sp),
+            Host<IRoomFurniWriter>(sp),
             Host<IRoomModelProvider>(sp),
             Host<IGrainFactory>(sp),
             sp.GetRequiredService<ILogger<TurboRoomCopyWriter>>()
@@ -68,7 +68,7 @@ public sealed class RoomCopyPlugin : ITurboPlugin
     public Task StartAsync(IServiceProvider services, CancellationToken ct)
     {
         _notices = services.GetRequiredService<Notices>();
-        _notices.Publisher = Host<EventSystem>(services).PublishAsync;
+        _notices.Publisher = Host<IEventPublisher>(services).PublishAsync;
 
         return Task.CompletedTask;
     }

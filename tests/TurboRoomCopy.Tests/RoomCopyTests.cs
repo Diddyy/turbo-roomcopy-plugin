@@ -11,6 +11,7 @@ using Turbo.Primitives.Navigator.Enums;
 using Turbo.Primitives.Plugins.Events;
 using Turbo.Primitives.Rooms.Enums;
 using Turbo.Primitives.Rooms.Enums.Wired;
+using Turbo.Primitives.Rooms.Wired.Variable;
 using Turbo.Rooms.Wired.Variables;
 using TurboRoomCopy.Database;
 using TurboRoomCopy.Format;
@@ -262,7 +263,7 @@ public class WiredCopyTests
         // The copied box's variable is renamed after the new box; the unknown one is passed on and reported.
         Assert.Equal(
             [
-                WiredVariableIdBuilder.CreateFromBoxId(ids[Samples.VARIABLE_BOX]).Value.ToString(),
+                WiredVariableId.OfBox(ids[Samples.VARIABLE_BOX]).Value.ToString(),
                 Samples.UNKNOWN_VARIABLE,
             ],
             message.VariableIds
