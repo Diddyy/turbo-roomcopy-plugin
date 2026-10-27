@@ -16,13 +16,14 @@
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\TurboRoomCopy\TurboRoomCopy.csproj" />
+    <ProjectReference Include="../../server/TurboRoomCopy.csproj" />
   </ItemGroup>
-  <!-- Here the host's assemblies are copied: the tests run without a host. -->
+  <!-- Here the server's assemblies are copied: the tests run without a server. -->
   <ItemGroup>
-    <Reference
-      Include="@(TurboAssembly)"
-      HintPath="$(TurboCloudPath)\%(Identity)\bin\$(TurboCloudConfiguration)\net10.0\%(Identity).dll"
-    />
+    <Reference Include="$(TurboBin)/Turbo.Contracts.dll" />
+    <Reference Include="$(TurboBin)/Turbo.Primitives.dll" />
+    <Reference Include="$(TurboBin)/Turbo.Database.dll" />
+    <!-- Only for an internal variable id in a test: the plugin itself never uses the server's rooms. -->
+    <Reference Include="$(TurboBin)/Turbo.Rooms.dll" />
   </ItemGroup>
 </Project>

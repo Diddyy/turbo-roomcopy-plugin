@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 using Orleans;
 using Turbo.Database.Context;
 using Turbo.Database.Entities.Room;
-using Turbo.Furniture.Custody;
+using Turbo.Database.Furniture;
 using Turbo.Primitives.Action;
 using Turbo.Primitives.Messages.Incoming.Userdefinedroomevents;
 using Turbo.Primitives.Movements;
@@ -24,13 +24,13 @@ namespace TurboRoomCopy;
 /// <see cref="IRoomCopyWriter"/> over the server's own services, so an imported room is written
 /// as the server writes one: the floor plan as the floor plan editor saves it (a custom model row
 /// named <c>room_&lt;id&gt;</c>, so a later edit in the editor changes that row), the room row as
-/// the navigator makes one, the furni through the furni custody (with their movements, cause
+/// the navigator makes one, the furni through the hotel's furni writer (with their movements, cause
 /// <see cref="CAUSE"/>), and each wired box through the room grain's save, which checks it as the
 /// editor's save is checked.
 /// </summary>
 public sealed class TurboRoomCopyWriter(
     IDbContextFactory<TurboDbContext> dbCtxFactory,
-    IFurnitureCustody custody,
+    IRoomFurniWriter furniWriter,
     IRoomModelProvider models,
     IGrainFactory grainFactory,
     ILogger<TurboRoomCopyWriter> logger
@@ -120,14 +120,15 @@ public sealed class TurboRoomCopyWriter(
         model.Name = $"room_{room.Id}";
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
 
-        var made = await custody
+        var made = await furniWriter
             .CreateInRoomAsync(
                 db,
                 room.Id,
                 ownerId,
                 [
-                    .. plan.Furni.Select(x => new FurniToPlace(
-                        new FurniToMake(x.DefinitionId, x.ExtraDataJson),
+                    .. plan.Furni.Select(x => new NewRoomFurni(
+                        x.DefinitionId,
+                        x.ExtraDataJson,
                         x.Position
                     )),
                 ],
@@ -169,7 +170,7 @@ public sealed class TurboRoomCopyWriter(
         var ids = new Dictionary<string, int>(StringComparer.Ordinal);
 
         for (var i = 0; i < made.Count; i++)
-            ids[plan.Furni[i].Ref] = made[i].Id;
+            ids[plan.Furni[i].Ref] = made[i];
 
         return new CreatedRoom(room.Id, model.Id, ids);
     }
